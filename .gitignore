@@ -1,6 +1,3 @@
-# Ignore wordpress site
-docroot/
-
 # Ignore config docker
 .env
 
