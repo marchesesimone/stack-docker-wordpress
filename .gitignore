@@ -1,0 +1,11 @@
+# Ignore wordpress site
+docroot/
+
+# Ignore config docker
+.env
+
+# Ignore dump sql
+dump/*.sql
+
+.idea/
+.DS_Store

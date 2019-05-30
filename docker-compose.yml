@@ -1,0 +1,56 @@
+version: "3"
+
+services:
+  mariadb:
+    image: wodby/mariadb:$MARIADB_TAG
+    container_name: "${PROJECT_NAME}_mariadb"
+    stop_grace_period: 30s
+    environment:
+      MYSQL_ROOT_PASSWORD: $DB_ROOT_PASSWORD
+      MYSQL_DATABASE: $DB_NAME
+      MYSQL_USER: $DB_USER
+      MYSQL_PASSWORD: $DB_PASSWORD
+    volumes:
+      - ./dump:/docker-entrypoint-initdb.d # Place init .sql file(s) here.
+     # - ./data/:/var/lib/mysql # I want to manage volumes manually.
+
+  php:
+    image: wodby/wordpress-php:$PHP_TAG
+    container_name: "${PROJECT_NAME}_php"
+    environment:
+      PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog:1025
+      DB_HOST: $DB_HOST
+      DB_USER: $DB_USER
+      DB_PASSWORD: $DB_PASSWORD
+      DB_NAME: $DB_NAME
+    volumes:
+      - "${SOURCE_DIR}:${CONTAINER_DIR}"
+    depends_on:
+      - mariadb
+
+  apache:
+    image: wodby/php-apache:$APACHE_TAG
+    container_name: "${PROJECT_NAME}_apache"
+    depends_on:
+      - php
+    environment:
+      APACHE_LOG_LEVEL: debug
+      APACHE_BACKEND_HOST: php
+      APACHE_SERVER_ROOT: /var/www/html/docroot
+    volumes:
+      - "${SOURCE_DIR}:${CONTAINER_DIR}"
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.backend=${PROJECT_NAME}_apache'
+      - 'traefik.port=80'
+      - 'traefik.frontend.rule=Host:web.${PROJECT_BASE_URL}'
+
+  #traefik:
+  #  image: traefik
+  #  container_name: "${PROJECT_NAME}_traefik"
+  #  command: -c /dev/null --web --docker --logLevel=INFO
+  #  ports:
+  #   - '80:80'
+  #      - '8080:8080' # Dashboard
+  #  volumes:
+  #    - /var/run/docker.sock:/var/run/docker.sock

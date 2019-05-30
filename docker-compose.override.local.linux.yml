@@ -1,0 +1,23 @@
+version: '3'
+
+services:
+
+  php:
+    image: wodby/wordpress-php:$PHP_DEV_TAG
+    environment:
+      ENV_TYPE: 'LOC'
+      #PHP_IDE_CONFIG: serverName=my-ide
+      #PHP_SENDMAIL_PATH: /usr/sbin/sendmail -t -i -S mailhog:1025
+      #PHP_XDEBUG: 1
+      #PHP_XDEBUG_DEFAULT_ENABLE: 1
+      PHP_XDEBUG_REMOTE_CONNECT_BACK: 0
+      PHP_XDEBUG_REMOTE_HOST: host.docker.internal
+
+  mailhog:
+    container_name: "${PROJECT_NAME}_mailhog"
+    image: mailhog/mailhog
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.backend=${PROJECT_NAME}_mailhog'
+      - 'traefik.port=8025'
+      - 'traefik.frontend.rule=Host:mailhog.${PROJECT_BASE_URL}'
